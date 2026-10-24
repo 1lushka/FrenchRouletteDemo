@@ -76,10 +76,9 @@ public class GameManager : MonoBehaviour
                 print("игрок победил");
                 Debug.Log("игрок победил");
                 SceneManager.LoadScene("Win scene");
+                yield break; // дальше цикл не идём — сцена победы загружена
             }
 
-            if (barrier != null)
-                ShowBarrier();
             yield return ShowBarrier();
 
             enemyAI.MakeMove();
@@ -96,8 +95,6 @@ public class GameManager : MonoBehaviour
 
             enemyAI.StartAttack();
 
-            if (barrier != null)
-                HideBarrier();
             yield return HideBarrier();
 
             // ✅ Ждём, пока враг закончит атаку (если нужно — можно добавить событие окончания)
@@ -158,11 +155,7 @@ public class GameManager : MonoBehaviour
         yield return TutorialThrow(tape2, false);
 
         // 4) барьер опускается, ножи возвращаются — и ТОЛЬКО ПОТОМ 2 оставшихся щита
-        if (barrier != null)
-        {
-            ShowBarrier();
-            yield return ShowBarrier();
-        }
+        yield return ShowBarrier();
 
         enemyAI.ReturnAxes();
 
@@ -181,11 +174,7 @@ public class GameManager : MonoBehaviour
     /// Барьер опускается + нож возвращается на старт и целится под следующий бросок
     private IEnumerator ResetBeforeShield(TapePiece nextTape)
     {
-        if (barrier != null)
-        {
-            ShowBarrier();
-            yield return ShowBarrier();
-        }
+        yield return ShowBarrier();
 
         enemyAI.MakeMoveSingle(tutorialAxeIndex, nextTape);
     }
@@ -197,11 +186,7 @@ public class GameManager : MonoBehaviour
 
         if (resetFirst)
         {
-            if (barrier != null)
-            {
-                ShowBarrier();
-                yield return ShowBarrier();
-            }
+            yield return ShowBarrier();
 
             enemyAI.MakeMoveSingle(tutorialAxeIndex, tape);
         }
@@ -215,11 +200,7 @@ public class GameManager : MonoBehaviour
         enemyAI.StartAttackSingle(tutorialAxeIndex);
         canAttack = false; // сбрасываем, чтобы случайный клик не стартовал следующий раунд
 
-        if (barrier != null)
-        {
-            HideBarrier();
-            yield return HideBarrier();
-        }
+        yield return HideBarrier();
 
         // ждём реальное попадание ножа
         yield return WaitLanded(tutorialAxeIndex, tutorialLandTimeout);
@@ -285,29 +266,31 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator ShowBarrier()
     {
-        barrier.transform.DOMoveY(barrierOriginalPosition.y, barrierMoveDuration);
         isBarrierDown = true;
+
+        if (barrier == null) yield break;
+
         PlayRandomSound(barrierCloseSounds);
 
         Tween t = barrier.transform.DOMoveY(barrierOriginalPosition.y, barrierMoveDuration)
             .SetEase(Ease.InQuad);
 
-        PlayRandomSound(barrierCloseSounds);
         yield return t.WaitForCompletion();
     }
 
 
     private IEnumerator HideBarrier()
     {
-        barrier.transform.DOMoveY(barrierOriginalPosition.y + barrierMoveDistance, barrierMoveDuration);
         isBarrierDown = false;
+
+        if (barrier == null) yield break;
+
         PlayRandomSound(barrierOpenSounds);
 
         Tween t = barrier.transform
             .DOMoveY(barrierOriginalPosition.y + barrierMoveDistance, barrierMoveDuration)
             .SetEase(Ease.OutQuad);
 
-        PlayRandomSound(barrierOpenSounds);
         yield return t.WaitForCompletion();
     }
 
@@ -326,7 +309,14 @@ public class GameManager : MonoBehaviour
         if (audioSource == null || clips == null || clips.Length == 0)
             return;
 
-        AudioClip clip = clips[Random.Range(0, clips.Length)];
-        audioSource.PlayOneShot(clip);
+        // пропускаем пустые слоты в массиве (в сцене может лежать null)
+        int start = Random.Range(0, clips.Length);
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AudioClip clip = clips[(start + i) % clips.Length];
+            if (clip == null) continue;
+            audioSource.PlayOneShot(clip);
+            return;
+        }
     }
 }

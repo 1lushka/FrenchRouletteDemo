@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Win scene.unity
     guid: b813ed7abcf5a944f8fb66057aaa059b
+  - enabled: 1
+    path: Assets/Scenes/IlyaTest.unity
+    guid: 6a5b502f2e240d546aaad33bf72e71fa
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

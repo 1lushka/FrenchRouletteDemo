@@ -31,6 +31,7 @@ public class TapePiece : MonoBehaviour
 
     public event Action<TapePiece, int> HealthChanged;
     public int Health => health;
+    public int MaxHealth => maxHealth > 0 ? maxHealth : health;
 
     void Start()
     {

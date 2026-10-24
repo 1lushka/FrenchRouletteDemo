@@ -4,19 +4,19 @@ using UnityEngine;
 
 public class RopesHealthManager : MonoBehaviour
 {
-    [Header("Верёвки для отслеживания")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")]
     [SerializeField] private TapePiece[] ropes;
 
-    // События "один раз за игру"
-    public event Action<int, TapePiece> OnFirstThresholdHit; // (порог, верёвка)
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ"
+    public event Action<int, TapePiece> OnFirstThresholdHit; // (пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ)
     public event Action<TapePiece> OnFirstHit2;
     public event Action<TapePiece> OnFirstHit1;
     public event Action<TapePiece> OnFirstHit0;
 
-    // Храним последнее здоровье по каждой верёвке для детекта "снижения через порог"
+    // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ"
     private readonly Dictionary<TapePiece, int> _lastHealth = new();
 
-    // Глобально запомненные уже сработавшие пороги (живут весь рантайм)
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
     private static readonly HashSet<int> _firedThresholdsGlobal = new HashSet<int>();
 
     private static readonly int[] _thresholds = { 2, 1, 0 };
@@ -30,7 +30,7 @@ public class RopesHealthManager : MonoBehaviour
             if (rope == null) continue;
 
             if (!_lastHealth.ContainsKey(rope))
-                _lastHealth[rope] = rope.Health; // читаем начальное значение
+                _lastHealth[rope] = rope.Health; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
             rope.HealthChanged += HandleHealthChanged;
         }
@@ -52,13 +52,13 @@ public class RopesHealthManager : MonoBehaviour
         if (!_lastHealth.TryGetValue(rope, out var prev))
             prev = newHealth;
 
-        // Проверяем пересечение каждого порога сверху вниз
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         foreach (var t in _thresholds)
         {
             if (_firedThresholdsGlobal.Contains(t))
-                continue; // уже стреляли этот порог ранее в этой игре
+                continue; // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 
-            // "Снижение через порог": было > t, стало <= t
+            // "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ": пїЅпїЅпїЅпїЅ > t, пїЅпїЅпїЅпїЅпїЅ <= t
             if (prev > t && newHealth <= t)
             {
                 _firedThresholdsGlobal.Add(t);
@@ -72,7 +72,7 @@ public class RopesHealthManager : MonoBehaviour
                     case 0: OnFirstHit0?.Invoke(rope); break;
                 }
 
-                // можно прервать — за один апдейт здоровья максимум один наименьший порог пересечётся
+                // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 break;
             }
         }
@@ -80,13 +80,14 @@ public class RopesHealthManager : MonoBehaviour
         _lastHealth[rope] = newHealth;
     }
 
-    // Опционально: метод для ручного сброса между уровнями/запусками
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     public static void ResetGlobalThresholds()
     {
         _firedThresholdsGlobal.Clear();
     }
     void Start()
     {
+        ResetGlobalThresholds(); // СЃР±СЂРѕСЃ СЃС‚Р°С‚РёС‡РµСЃРєРёС… РїРѕСЂРѕРіРѕРІ РїСЂРё (РїРµСЂРµ)Р·Р°РїСѓСЃРєРµ СЃС†РµРЅС‹
         HookRopesHealthDebug(this);
     }
 
