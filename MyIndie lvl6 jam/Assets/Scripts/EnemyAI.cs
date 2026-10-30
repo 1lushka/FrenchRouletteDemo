@@ -1,18 +1,28 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class EnemyAI : MonoBehaviour
 {
-    [SerializeField] private TapePiece[] tapePieces;
+    [Header("Player Tapes")]
+    [SerializeField] private TapePiece[] playerTapePieces;
+
+    [Header("Enemy Tapes")]
+    [SerializeField] private TapePiece[] enemyTapePieces;
+
+    [Header("Axes")]
     [SerializeField] private Transform[] axes;
+    [SerializeField] private Transform[] playerAxePositions;
 
     private Vector3[] startPositions;
 
-    void Awake()
+    private void Awake()
     {
         if (axes != null && axes.Length > 0)
         {
             startPositions = new Vector3[axes.Length];
+
             for (int i = 0; i < axes.Length; i++)
             {
                 if (axes[i] != null)
@@ -23,15 +33,38 @@ public class EnemyAI : MonoBehaviour
 
     public void MakeMove()
     {
-        if (tapePieces == null || tapePieces.Length == 0 || axes == null || axes.Length == 0)
-            return;
+        MoveAxesToRandomTapes(playerTapePieces);
+    }
 
-        List<TapePiece> availablePieces = new List<TapePiece>(tapePieces);
+    public void MakeMoveEnemy()
+    {
+        MoveAxesToRandomTapes(enemyTapePieces);
+    }
+
+    private void MoveAxesToRandomTapes(TapePiece[] tapes)
+    {
+        if (tapes == null || tapes.Length == 0 ||
+            axes == null || axes.Length == 0)
+        {
+            Debug.LogWarning("Не назначены верёвки или топоры.");
+            return;
+        }
+
+        List<TapePiece> availablePieces = new List<TapePiece>();
+
+        foreach (TapePiece tape in tapes)
+        {
+            if (tape != null)
+                availablePieces.Add(tape);
+        }
 
         for (int i = 0; i < axes.Length; i++)
         {
             Transform axe = axes[i];
-            if (axe == null) continue;
+
+            if (axe == null)
+                continue;
+
             if (availablePieces.Count == 0)
             {
                 Debug.LogWarning("Не хватает TapePiece для всех топоров!");
@@ -42,8 +75,11 @@ public class EnemyAI : MonoBehaviour
             TapePiece chosenPiece = availablePieces[randIndex];
             availablePieces.RemoveAt(randIndex);
 
-            float startY = startPositions != null && startPositions.Length > i ? startPositions[i].y : axe.position.y;
-            float startZ = startPositions != null && startPositions.Length > i ? startPositions[i].z : axe.position.z;
+            float startY = startPositions != null && startPositions.Length > i
+                ? startPositions[i].y : axe.position.y;
+
+            float startZ = startPositions != null && startPositions.Length > i
+                ? startPositions[i].z : axe.position.z;
 
             Vector3 targetPos = new Vector3(
                 chosenPiece.transform.position.x,
@@ -55,41 +91,64 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    public void StartAttack()
+    public void StartAttack(float speedMultiplier = 1f, bool attackEnemy = false)
     {
-        foreach (Transform axe in axes)
+        if (axes == null)
+            return;
+
+        for (int i = 0; i < axes.Length; i++)
         {
-            if (axe == null) continue;
+            Transform axe = axes[i];
+
+            if (axe == null)
+                continue;
 
             Axe axeCtrl = axe.GetComponent<Axe>();
+
             if (axeCtrl != null)
-                axeCtrl.Throw();
+                axeCtrl.Throw(speedMultiplier, attackEnemy);
         }
     }
 
-    // ====================== Туториал (одиночный нож) ======================
-
     public int AxeCount => axes == null ? 0 : axes.Length;
+
+    public int PlayerTapeCount => playerTapePieces == null ? 0 : playerTapePieces.Length;
+
+    public int EnemyTapeCount => enemyTapePieces == null ? 0 : enemyTapePieces.Length;
 
     public Axe GetAxe(int index)
     {
         if (axes == null || index < 0 || index >= axes.Length || axes[index] == null)
             return null;
+
         return axes[index].GetComponent<Axe>();
     }
 
-    /// Ближайшая к указанной X верёвка (для ножа "по центру")
     public TapePiece GetTapeClosestToX(float x)
     {
-        if (tapePieces == null || tapePieces.Length == 0) return null;
+        return GetTapeClosestToX(playerTapePieces, x);
+    }
+
+    public TapePiece GetEnemyTapeClosestToX(float x)
+    {
+        return GetTapeClosestToX(enemyTapePieces, x);
+    }
+
+    private TapePiece GetTapeClosestToX(TapePiece[] tapes, float x)
+    {
+        if (tapes == null || tapes.Length == 0)
+            return null;
 
         TapePiece best = null;
         float bestDist = float.MaxValue;
 
-        foreach (var tape in tapePieces)
+        foreach (TapePiece tape in tapes)
         {
-            if (tape == null) continue;
+            if (tape == null)
+                continue;
+
             float d = Mathf.Abs(tape.transform.position.x - x);
+
             if (d < bestDist)
             {
                 bestDist = d;
@@ -100,17 +159,22 @@ public class EnemyAI : MonoBehaviour
         return best;
     }
 
-    /// Целит только один нож в указанную верёвку
     public void MakeMoveSingle(int axeIndex, TapePiece tape)
     {
-        if (axes == null || axeIndex < 0 || axeIndex >= axes.Length) return;
-        if (tape == null) return;
+        if (axes == null || axeIndex < 0 || axeIndex >= axes.Length)
+            return;
+
+        if (tape == null)
+            return;
 
         Transform axe = axes[axeIndex];
-        if (axe == null) return;
+
+        if (axe == null)
+            return;
 
         float startY = startPositions != null && startPositions.Length > axeIndex
             ? startPositions[axeIndex].y : axe.position.y;
+
         float startZ = startPositions != null && startPositions.Length > axeIndex
             ? startPositions[axeIndex].z : axe.position.z;
 
@@ -123,10 +187,10 @@ public class EnemyAI : MonoBehaviour
         ObjectMover.MoveTo(axe, targetPos);
     }
 
-    /// Возвращает все ножи на стартовые позиции (без прицеливания)
     public void ReturnAxes()
     {
-        if (startPositions == null || axes == null) return;
+        if (startPositions == null || axes == null)
+            return;
 
         for (int i = 0; i < axes.Length && i < startPositions.Length; i++)
         {
@@ -135,10 +199,36 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    /// Бросает только один нож
+    public void ReturnAxesToPlayer()
+    {
+        if (axes == null || playerAxePositions == null)
+            return;
+
+        int count = Mathf.Min(axes.Length, playerAxePositions.Length);
+
+        for (int i = 0; i < count; i++)
+        {
+            if (axes[i] == null || playerAxePositions[i] == null)
+                continue;
+
+            Axe axe = axes[i].GetComponent<Axe>();
+
+            axes[i].DOKill();
+
+            if (axe != null)
+                axe.ResetFlight();
+
+            axes[i].SetPositionAndRotation(
+                playerAxePositions[i].position,
+                playerAxePositions[i].rotation
+            );
+        }
+    }
+
     public void StartAttackSingle(int axeIndex)
     {
         Axe axeCtrl = GetAxe(axeIndex);
+
         if (axeCtrl != null)
             axeCtrl.Throw();
     }
